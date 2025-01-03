@@ -54,7 +54,7 @@ describe("Betting Contract Tests", () => {
     const payerWallet = provider.wallet;
     console.log("Provider Wallet: ",payerWallet.publicKey.toBase58())
 
-    const tx = await program.methods.createBet("Will Tokyo win?", new BN(100), new BN(100000))
+    const tx = await program.methods.createBet("SOL 500$ before December 2025?", new BN(100), new BN(100000))
     .accounts({
       signer: payerWallet.publicKey,
       tokenMint: tokenMint,
@@ -67,13 +67,15 @@ describe("Betting Contract Tests", () => {
 
     //here you're getting the bet account pubkey from the bet title, but in the blink you should have it before hand
     let [betAccountKey] = PublicKey.findProgramAddressSync(
-      [Buffer.from("Will Tokyo win?")],
+      [Buffer.from("SOL 500$ before December 2025?")],
       program.programId
     );
     const betAccount = await program.account.bet.fetch(betAccountKey);
     console.log("Bet Account Details: ", betAccount)
     console.log("Number of Yes Bettors: ", betAccount.yesBettors.toNumber())
     console.log("Number of No Bettors: ", betAccount.noBettors.toNumber())
+    console.log("Total Yes Amount: ", betAccount.totalYesAmount.toNumber())
+    console.log("Total No Amount: ", betAccount.totalNoAmount.toNumber())
 
     let [vaultTokenAccount] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault_token_account"), betAccountKey.toBuffer()],
@@ -87,8 +89,11 @@ describe("Betting Contract Tests", () => {
   );
   console.log("Bettor token Account: ",bettorTokenAccount)
 
+    const vault_token_balance_0 = await provider.connection.getTokenAccountBalance(vaultTokenAccount)
+    console.log("Vault Account Balance: ",vault_token_balance_0.value.amount)
+
     const tx = await program.methods
-    .placeBet(false) //betting YES
+    .placeBet(true)
     .accounts({
       bettor: provider.wallet.publicKey,
       bet: betAccountKey,
@@ -103,6 +108,20 @@ describe("Betting Contract Tests", () => {
     console.log("Bet Account Details(Updated): ", updatedBetAccountState)
     console.log("Number of Yes Bettors(Updated): ", updatedBetAccountState.yesBettors.toNumber())
     console.log("Number of No Bettors(Updated): ", updatedBetAccountState.noBettors.toNumber())
+    console.log("Total Yes Amount(Updated): ", updatedBetAccountState.totalYesAmount.toNumber())
+    console.log("Total No Amount(Updated): ", updatedBetAccountState.totalNoAmount.toNumber())
+
+    const vault_token_balance = await provider.connection.getTokenAccountBalance(vaultTokenAccount)
+    console.log("Vault Account Balance: ",vault_token_balance.value.amount)
+  })
+
+  //figure out the resolution part properly, use perplexity as resolution source
+  it("Should Resolve the Bet", async() => {
+    
+  })
+
+  it("Should Claim the Bet Amount on Winning", async() => {
+
   })
 
 });
